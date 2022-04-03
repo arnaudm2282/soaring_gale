@@ -342,6 +342,9 @@ def data_split_symbol_and_date(train_files, val_files, test_files, path,
 # %% Augment data functions
 
 def add_noise_to_data_point(data_point):
+    '''
+    Return augmented datapoint by adding noise~N(0,1)
+    '''
     x_shape = data_point[0].shape
     t_shape = data_point[1].shape
     
@@ -350,6 +353,33 @@ def add_noise_to_data_point(data_point):
     
     return (new_x, new_t)
 
+
+def translate_price(data_point, min_trans=10, max_trans=1000):
+    '''
+    Return augmented datapoint by translating values by a fixed amount while
+    preserving the proportion between timesteps based on the first open price.
+    
+    Arguments:
+        data_point - tuple (x,t)
+            - x shape (M,N) - OHLC price format
+            - t shape (O,P) - OHLC price format
+    '''
+    x = data_point[0]
+    t = data_point[1]
+    
+    # proportion is based off the first open price of the input data
+    start_price = x[0][0]
+    x_proportion = x / start_price
+    t_proportion = t / start_price
+    
+    # amount to translate datapoint by
+    new_base_price = torch.tensor(random.uniform(min_trans, max_trans))
+    
+    new_x = x_proportion * new_base_price
+    new_t = t_proportion * new_base_price
+    
+    return (new_x, new_t)
+    
 
 def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
             random_seed=42):
