@@ -380,7 +380,7 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
 # %% If running this file standalone
 
 if __name__ == '__main__':
-    etfs_path = './data_s/ETFs'
+    etfs_path = './data/ETFs'
     etf_files = os.listdir(etfs_path)
     
     # Split data by date range
