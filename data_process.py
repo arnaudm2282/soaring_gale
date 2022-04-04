@@ -411,7 +411,96 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
     
     return
 
+
+def get_specific_date_data(date_data, data, start_date='2000-01-01', end_date='2020-01-01'):
+    '''
+    Parameters
+    ----------
+    date_data : numpy array dtype '<U10'
+        shape (N,1)
+    data : numpy array dtype 'float32'
+        shape (N,M)
+    start_date : string date 'YYYY-mm-dd'
+    end_date : string date 'YYYY-mm-dd'
+
+    Returns
+    -------
+    data_in_range : list of tuples (x,t)
+        x - shape (x_length, M)
+        t - shape (t_length, M)
+    '''
+    N = data.shape[0]
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
     
+    # start, end indexes corresponding to dates
+    start_index = -1
+    end_index = -1
+    for i in range(N):
+        date_i = datetime.datetime.strptime(date_data[i,0], '%Y-%m-%d')
+        
+        # train dates
+        if date_i >= start_date and start_index == -1:
+            start_index = int(i)
+        elif date_i >= end_date and end_index == -1:
+            end_index = int(i)
+    
+    data_in_range = data[start_index:end_index]
+
+    return data_in_range
+
+
+def normalize_single_stock(data_date):
+    '''
+    Parameters
+    ----------
+    data_date : numpy array dtype '<U10'
+        shape (N, M)
+
+    Returns
+    -------
+    norm_data : numpy array dtype '<U10'
+        shape (N, M)
+    '''
+    norm_data = np.empty((0,data_date.shape[1]))
+    for days in data_date:
+      min_price = min(days)
+      max_price = max(days)
+      normalize_data = (days-min_price)/(max_price-min_price)
+      norm_data = np.append(norm_data,np.array([normalize_data]),axis=0)
+
+    return norm_data
+
+def normalize_train_data(train_data, path_name, train_start_date, train_end_date):
+    '''
+    Parameters
+    ----------
+    train_data : set of CSV files, in which each file represents a unique stock.
+
+    train_start_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
+
+    train_end_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
+
+    Returns
+    -------
+    normalized_data : List of tuple_tensor_pairs
+        len(normalized_data) == len(train_data)
+    '''
+
+    normalized_data = []
+    for stock in train_data:
+      numpy_data = load_price_data_into_numpy_array(stock,path_name,process_data=remove_volume_open_interest)
+
+      date_data = get_specific_date_data(numpy_data[0],numpy_data[1],train_start_date,train_end_date)
+
+      norm_data = normalize_single_stock(date_data)
+
+      pairs=make_x_t_tuple_tensor_pairs_in_place(norm_data)
+      normalized_data.append(pairs)
+      
+    return normalized_data
+
+
 # %% If running this file standalone
 
 if __name__ == '__main__':
@@ -456,6 +545,10 @@ if __name__ == '__main__':
     
     # normalize data example
     if False:
-        # TODO ADD HERE
-        pass
+        test, val, train = split_etfs(etf_files)
+        train_sample = train[1:5]
+        train_start_date = '2017-01-01'
+        train_end_date = '2017-02-02'
+        normalized_data = normalize_train_data(train_sample,etfs_path,train_start_date,train_end_date)
+        print('len(normalized_data):', len(normalized_data))
 
