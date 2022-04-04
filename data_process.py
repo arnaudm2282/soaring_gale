@@ -339,6 +339,11 @@ def data_split_symbol_and_date(train_files, val_files, test_files, path,
     return train, val, test
 
 
+# %% Normalize data functions
+
+# TODO ADD HERE
+
+
 # %% Augment data functions
 
 def add_noise_to_data_point(data_point):
@@ -447,4 +452,10 @@ if __name__ == '__main__':
         print('len(train):', len(train_data))
         print('len(val):', len(val_data))
         print('len(test):', len(test_data))
+        
+    
+    # normalize data example
+    if False:
+        # TODO ADD HERE
+        pass
 
