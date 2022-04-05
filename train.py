@@ -17,14 +17,14 @@ def get_accuracy(model, data):
     model.eval()
     
     correct, total = 0, 0
-    for x, t in iter(data):
-        out = model(x)
+    for x, t in iter(data_loader):
+        out = model.forward(x)
         correct+=np.sum(np.abs(out.detach().numpy() - t.detach().numpy()))
         total+=t.shape[0]
     return correct/total
 
 
-def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5, 
+def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5, 
               batch_size=256, criteria='mse', verbose=True):
     final=np.empty((0,))
     
@@ -50,7 +50,11 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5,
         for x, t in iter(train_loader):
             model.train()
             # for input, output in train:
-            pred = model(x)
+            
+            # model output
+            pred = model.forward(x)
+            
+            # training step
             loss = criterion(pred,t)
             optimizer.zero_grad()
             loss.backward()
@@ -79,18 +83,23 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.title("Training Curve")
     plt.plot(epochs, train_acc, 'b-',label="Train")
     
+    plt.title('Train loss')
     plt.xlabel("Epoch")
-    plt.ylabel("T Accuracy", color='b')
+    plt.ylabel("Train Accuracy", color='b')
     
     plt.legend(loc='best')
     plt.show()
 
+    plt.title('Valid Loss')
     plt.plot(epochs, valid_acc, 'y-',label="Validation")
     plt.xlabel("Epoch")
-    plt.ylabel("V Accuracy", color='y')
+    plt.ylabel("Valid Accuracy", color='y')
     plt.legend(loc='best')
     plt.show()
 
+    # TODO seperate function for one timeseries of price data.
+    # data above can be from many ETFs during training.
+    plt.title('Forecast TODO')
     plt.plot(range(int(len(final)/4)),final[1::4],label='Prediction')
     plt.xlabel("Day")
     plt.ylabel("Prediction", color='y')
@@ -98,18 +107,24 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.show()
 
 if __name__ == '__main__':
+    if True:
+        data = []
     
-    data = []
-
-    _, data = datap.load_price_data_into_numpy_array('aadr.us.txt', 
-                                       './data/ETFs')
-
-    data = datap.remove_volume_open_interest(data)  
-    x_t_pairs = datap.make_x_t_tuple_tensor_pairs_in_place(data, 30, 5)  
-    train_loader = x_t_pairs[:1000]
-    valid_loader = x_t_pairs[1000:]
-
-    LSTMModel = model.LSTM(4,4,50,3)
-
-    train_RNN(LSTMModel,train_loader,valid_loader,num_epochs=10,
-              learning_rate=0.001)
+        _, data = datap.load_price_data_into_numpy_array('aadr.us.txt', 
+                                           './data/ETFs')
+    
+        data = datap.remove_volume_open_interest(data)  
+        x_t_pairs = datap.make_x_t_tuple_tensor_pairs_in_place(data, 30, 5)  
+        train_data = x_t_pairs[:1000]
+        valid_data = x_t_pairs[1000:]
+    
+        # LSTMModel = model.LSTM(4,4,50,3)
+        # train_model(LSTMModel,train_loader,valid_loader,num_epochs=10,
+        #           learning_rate=0.001)
+    
+        mod = model.Forecaster(input_features=4,encoder_hidden_features=10,
+                               forecaster_hidden_features=4,output_length=5)
+        train_model(mod,train_data,valid_data,num_epochs=1000,
+                    learning_rate=0.001)
+    
+        
