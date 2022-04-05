@@ -12,16 +12,27 @@ import matplotlib.pyplot as plt
 import data_process as datap
 import model
 
-def get_accuracy(model, data):
+# def get_accuracy(model, data):
+#     data_loader = DataLoader(data, batch_size=512)
+#     model.eval()
+    
+#     correct, total = 0, 0
+#     for x, t in iter(data_loader):
+#         out = model.forward(x)
+#         correct+=np.sum(np.abs(out.detach().numpy() - t.detach().numpy()))
+#         total+=t.shape[0]
+#     return correct/total
+
+def average_model_error(model, data):
     data_loader = DataLoader(data, batch_size=512)
     model.eval()
     
-    correct, total = 0, 0
+    error = 0
+    N = len(data)
     for x, t in iter(data_loader):
         out = model.forward(x)
-        correct+=np.sum(np.abs(out.detach().numpy() - t.detach().numpy()))
-        total+=t.shape[0]
-    return correct/total
+        error += torch.sum((t.detach() - out.detach() ** 2))
+    return error / N
 
 
 def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5, 
@@ -63,7 +74,7 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     
     # variables to track model performance
-    losses, train_acc, valid_acc = [], [], []
+    losses, train_error, valid_error = [], [], []
     epochs = []
     
     # optimize model
@@ -88,11 +99,11 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
         # add performance to tracking variables
         losses.append(float(loss))
         epochs.append(epoch)
-        train_acc.append(get_accuracy(model, train))
-        valid_acc.append(get_accuracy(model, valid))
+        train_error.append(average_model_error(model, train))
+        valid_error.append(average_model_error(model, valid))
         if verbose:
             print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
-                    epoch+1, loss, train_acc[-1], valid_acc[-1]))
+                    epoch+1, loss, train_error[-1], valid_error[-1]))
         
 
     plt.title("Training Curve")
@@ -102,19 +113,19 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.show()
 
     plt.title("Training Curve")
-    plt.plot(epochs, train_acc, 'b-',label="Train")
+    plt.plot(epochs, train_error, 'b-',label="Train")
     
     plt.title('Train loss')
     plt.xlabel("Epoch")
-    plt.ylabel("Train Accuracy", color='b')
+    plt.ylabel("Train Error", color='b')
     
     plt.legend(loc='best')
     plt.show()
 
     plt.title('Valid Loss')
-    plt.plot(epochs, valid_acc, 'y-',label="Validation")
+    plt.plot(epochs, valid_error, 'y-',label="Validation")
     plt.xlabel("Epoch")
-    plt.ylabel("Valid Accuracy", color='y')
+    plt.ylabel("Valid Error", color='y')
     plt.legend(loc='best')
     plt.show()
 
@@ -145,7 +156,7 @@ if __name__ == '__main__':
     
         mod = model.Forecaster(input_features=4,encoder_hidden_features=10,
                                forecaster_hidden_features=4,output_length=5)
-        train_model(mod,train_data,valid_data,num_epochs=1000,
+        train_model(mod,train_data,valid_data,num_epochs=500,
                     learning_rate=0.001)
     
         
