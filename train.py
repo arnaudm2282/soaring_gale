@@ -15,10 +15,6 @@ import model
 def get_accuracy(model, test):
     correct, total = 0, 0
     for input, output in test:
-        
-        
-        
-        
         out = model(input)
         correct+=np.sum(np.abs(out.detach().numpy() -output.detach().numpy()))
         total+=output.shape[0]
@@ -35,13 +31,7 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
     losses, train_acc, valid_acc = [], [], []
     epochs = []
     for epoch in range(num_epochs):
-        
-        
-        
-        
-        
         for input, output in train:
-            
             #input = input.permute(0,2,1)
             pred = model(input)
             loss = criterion(pred,output)
@@ -51,7 +41,6 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
             #to plot final epoch of predictions
             if epoch==num_epochs-1:
                 final = np.append(final,pred.detach().numpy()[:,1])
-            
         
         losses.append(float(loss))
 
