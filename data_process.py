@@ -405,7 +405,8 @@ def normalize_single_stock(data):
 
 
 def normalize_train_data(train_data, path_name, train_start_date, train_end_date,
-                         x_length=30, t_length=5):
+                         x_length=30, t_length=5, 
+                         normalizer=normalize_single_stock):
     '''
     return normalized (x,t) pairs from train_data.
     
@@ -418,6 +419,9 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
     train_start_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
 
     train_end_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
+
+    normalizer - function(data: array shape (N,M))
+        - should return normalized version of its array argument
 
     Returns
     -------
@@ -436,7 +440,7 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
                                            train_start_date, train_end_date)
   
   
-        norm_data = normalize_single_stock(date_data)
+        norm_data = normalizer(date_data)
   
         pairs=make_x_t_tuple_tensor_pairs_in_place(norm_data,
                                                    input_length=x_length,
