@@ -51,32 +51,35 @@ class LSTM(nn.Module):
         out=self.fc(out[:,:5,:])
         return out
 
-# old forecaster
-# class Forecaster(nn.Module):
-#     def __init__(self, input_features, encoder_hidden_features, 
-#                  forecaster_hidden_features, output_size,encoder_layers=1, 
-#                  forecaster_layers=1):
-#         super(Forecaster, self).__init__()
+
+class Forecaster_fc(nn.Module):
+    def __init__(self, input_features, encoder_hidden_features, 
+                  forecaster_hidden_features, output_size,encoder_layers=1, 
+                  forecaster_layers=1):
+        super(Forecaster, self).__init__()
         
-#         self.encoder = nn.RNN(input_size=input_features,
-#                               hidden_size=encoder_hidden_features,
-#                               num_layers=encoder_layers,
-#                               batch_first=True)
+        self.encoder = nn.RNN(input_size=input_features,
+                              hidden_size=encoder_hidden_features,
+                              num_layers=encoder_layers,
+                              batch_first=True)
         
-#         self.forecaster = nn.RNN(input_size=encoder_hidden_features,
-#                                  hidden_size=forecaster_hidden_features,
-#                                  num_layers=forecaster_layers,
-#                                  batch_first=True)
-#         self.fc = nn.Linear(forecaster_hidden_features,output_size)
+        self.forecaster = nn.RNN(input_size=encoder_hidden_features,
+                                  hidden_size=forecaster_hidden_features,
+                                  num_layers=forecaster_layers,
+                                  batch_first=True)
         
-#     def forward(self, x):
-#         encoder_o, encoder_h_n = self.encoder(x)
-#         forecaster_o, forecaster_h_n = self.forecaster(encoder_o)
-#         #print('x shape', x.shape)
-#         #print('e shape', encoder_o.shape, encoder_h_n.shape)
-#         #print('f shape', forecaster_o.shape, forecaster_h_n.shape)
-#         out = self.fc(forecaster_o[:,:5,:])
-#         return out#, forecaster_h_n
+        # TODO
+        self.fc = nn.Linear(forecaster_hidden_features,output_size)
+        
+    def forward(self, x):
+        encoder_o, encoder_h_n = self.encoder(x)
+        forecaster_o, forecaster_h_n = self.forecaster(encoder_o)
+        #print('x shape', x.shape)
+        #print('e shape', encoder_o.shape, encoder_h_n.shape)
+        #print('f shape', forecaster_o.shape, forecaster_h_n.shape)
+        out = self.fc(forecaster_o[:,:5,:]) # TODO
+        return out#, forecaster_h_n
+
 
 class Forecaster(nn.Module):
     def __init__(self, input_features, encoder_hidden_features, 
