@@ -404,6 +404,20 @@ def normalize_single_stock(data):
     return norm_data
 
 
+def normalize_as_avg_price(data):
+    '''
+    Parameters
+    ----------
+    data : array shape (N,4)
+        N timesteps of Open, High, Low, Close data
+    '''
+    avg_daily_price = np.average(data, axis=1)
+    
+    norm_data = data / avg_daily_price.reshape(-1,1)
+    
+    return norm_data
+
+
 def normalize_train_data(train_data, path_name, train_start_date, train_end_date,
                          x_length=30, t_length=5, 
                          normalizer=normalize_single_stock):
@@ -568,7 +582,25 @@ if __name__ == '__main__':
         train_sample = train[1:5]
         train_start_date = '2010-01-01'
         train_end_date = '2017-02-02'
-        normalized_data = normalize_train_data(train_sample,etfs_path,train_start_date,train_end_date)
+        
+        # normalize_single_stock normalizer
+        normalized_data = normalize_train_data(train_sample,
+                                               etfs_path,
+                                               train_start_date,
+                                               train_end_date)
+        print('len(normalized_data):', len(normalized_data))
+        
+        data_point = normalized_data[0]
+        x, t = data_point
+        print(x.shape)
+        print(t.shape)
+        
+        # normalize_as_avg_price normalizer
+        normalized_data = normalize_train_data(train_sample,
+                                               etfs_path,
+                                               train_start_date,
+                                               train_end_date,
+                                               normalizer=normalize_as_avg_price)
         print('len(normalized_data):', len(normalized_data))
         
         data_point = normalized_data[0]
