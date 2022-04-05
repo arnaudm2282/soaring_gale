@@ -425,9 +425,7 @@ def get_specific_date_data(date_data, data, start_date='2000-01-01', end_date='2
 
     Returns
     -------
-    data_in_range : list of tuples (x,t)
-        x - shape (x_length, M)
-        t - shape (t_length, M)
+    data_in_range : array shape (Q,M) - timesteps within date range
     '''
     N = data.shape[0]
     start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
@@ -450,7 +448,7 @@ def get_specific_date_data(date_data, data, start_date='2000-01-01', end_date='2
     return data_in_range
 
 
-def normalize_single_stock(data_date):
+def normalize_single_stock(data):
     '''
     Parameters
     ----------
@@ -459,11 +457,12 @@ def normalize_single_stock(data_date):
 
     Returns
     -------
-    norm_data : numpy array dtype '<U10'
+    norm_data : numpy array dtype 'float32'
         shape (N, M)
     '''
-    norm_data = np.empty((0,data_date.shape[1]))
-    for days in data_date:
+    norm_data = np.empty((0,data.shape[1]))
+    
+    for days in data:
       min_price = min(days)
       max_price = max(days)
       normalize_data = (days-min_price)/(max_price-min_price)
@@ -488,6 +487,7 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
     '''
 
     normalized_data = []
+
     for stock in train_data:
       numpy_data = load_price_data_into_numpy_array(stock,path_name,process_data=remove_volume_open_interest)
 
@@ -496,7 +496,9 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
       norm_data = normalize_single_stock(date_data)
 
       pairs=make_x_t_tuple_tensor_pairs_in_place(norm_data)
-      normalized_data.append(pairs)
+      normalized_data += pairs
+    
+    print(normalized_data)
       
     return normalized_data
 
@@ -544,7 +546,7 @@ if __name__ == '__main__':
         
     
     # normalize data example
-    if False:
+    if True:
         test, val, train = split_etfs(etf_files)
         train_sample = train[1:5]
         train_start_date = '2017-01-01'
@@ -552,3 +554,5 @@ if __name__ == '__main__':
         normalized_data = normalize_train_data(train_sample,etfs_path,train_start_date,train_end_date)
         print('len(normalized_data):', len(normalized_data))
 
+
+# %%
