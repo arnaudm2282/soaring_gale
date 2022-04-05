@@ -12,43 +12,64 @@ import matplotlib.pyplot as plt
 import data_process as datap
 import model
 
-def get_accuracy(model, test):
+def get_accuracy(model, data):
+    data_loader = DataLoader(data, batch_size=512)
+    model.eval()
+    
     correct, total = 0, 0
-    for input, output in test:
-        out = model(input)
-        correct+=np.sum(np.abs(out.detach().numpy() -output.detach().numpy()))
-        total+=output.shape[0]
+    for x, t in iter(data):
+        out = model(x)
+        correct+=np.sum(np.abs(out.detach().numpy() - t.detach().numpy()))
+        total+=t.shape[0]
     return correct/total
 
 
-def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
-    # TODO
+def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5, 
+              batch_size=256, criteria='mse', verbose=True):
     final=np.empty((0,))
-    #playing with different loss functions
-    #criterion = nn.MSELoss(reduction='mean')
-    criterion = nn.SmoothL1Loss()
+    
+    # loss function
+    criterion = None
+    if criteria == 'mse':
+        criterion = nn.MSELoss(reduction='mean')
+    else:
+        criterion = nn.SmoothL1Loss()
+        
+    # data loader
+    train_loader = DataLoader(train, batch_size=batch_size,shuffle=True,
+                              drop_last=True)
+    
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
+    
+    # variables to track model performance
     losses, train_acc, valid_acc = [], [], []
     epochs = []
+    
+    # optimize model
     for epoch in range(num_epochs):
-        for input, output in train:
-            #input = input.permute(0,2,1)
-            pred = model(input)
-            loss = criterion(pred,output)
+        for x, t in iter(train_loader):
+            model.train()
+            # for input, output in train:
+            pred = model(x)
+            loss = criterion(pred,t)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            #to plot final epoch of predictions
+            
+            # to plot final epoch of predictions
             if epoch==num_epochs-1:
                 final = np.append(final,pred.detach().numpy()[:,1])
         
+        # add performance to tracking variables
         losses.append(float(loss))
-
         epochs.append(epoch)
         train_acc.append(get_accuracy(model, train))
         valid_acc.append(get_accuracy(model, valid))
-        print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
-                epoch+1, loss, train_acc[-1], valid_acc[-1]))
+        if verbose:
+            print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
+                    epoch+1, loss, train_acc[-1], valid_acc[-1]))
+        
+
     plt.title("Training Curve")
     plt.plot(losses, label="Train")
     plt.xlabel("Epoch")
@@ -81,13 +102,14 @@ if __name__ == '__main__':
     data = []
 
     _, data = datap.load_price_data_into_numpy_array('aadr.us.txt', 
-                                       '../Data/ETFs')
+                                       './data/ETFs')
 
     data = datap.remove_volume_open_interest(data)  
     x_t_pairs = datap.make_x_t_tuple_tensor_pairs_in_place(data, 30, 5)  
-    train_loader = DataLoader(x_t_pairs[:1000],batch_size=30,shuffle=False,drop_last=True)
-    valid_loader = DataLoader(x_t_pairs[1000:],batch_size=30,shuffle=False,drop_last=True)
+    train_loader = x_t_pairs[:1000]
+    valid_loader = x_t_pairs[1000:]
 
     LSTMModel = model.LSTM(4,4,50,3)
 
-    train_RNN(LSTMModel,train_loader,valid_loader,num_epochs=100,learning_rate=0.001)
+    train_RNN(LSTMModel,train_loader,valid_loader,num_epochs=10,
+              learning_rate=0.001)
