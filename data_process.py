@@ -460,8 +460,6 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
                                                    input_length=x_length,
                                                    output_length=t_length)
         normalized_data += pairs
-    
-    print(normalized_data)
       
     return normalized_data
 
