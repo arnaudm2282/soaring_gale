@@ -137,9 +137,35 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.ylabel("Prediction", color='y')
     plt.legend(loc='best')
     plt.show()
+    
+# %% misc functions
+
+def plot_ohlc_timeseries(data, title='timeseries'):
+    '''
+    data - array shape (N,4)
+        - N timesteps of 4 features (Open, High, Low, Close)
+    '''
+    plt.title(title)
+    N_steps = torch.arange(data.shape[0]) + 1
+    O = data[:,0]
+    H = data[:,1]
+    L = data[:,2]
+    C = data[:,3]
+    
+    plt.plot(N_steps,O,label='Open')
+    plt.plot(N_steps,H,label='High')
+    plt.plot(N_steps,L,label='Low')
+    plt.plot(N_steps,C,label='Close')
+    
+    plt.xlabel('timestep')
+    plt.ylabel('price')
+    plt.legend(loc='best')
+    plt.show()
+
+# %%
 
 if __name__ == '__main__':
-    if True:
+    if False:
         data = []
     
         _, data = datap.load_price_data_into_numpy_array('aadr.us.txt', 
