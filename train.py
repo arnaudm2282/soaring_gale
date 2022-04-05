@@ -12,17 +12,6 @@ import matplotlib.pyplot as plt
 import data_process as datap
 import model
 
-# def get_accuracy(model, data):
-#     data_loader = DataLoader(data, batch_size=512)
-#     model.eval()
-    
-#     correct, total = 0, 0
-#     for x, t in iter(data_loader):
-#         out = model.forward(x)
-#         correct+=np.sum(np.abs(out.detach().numpy() - t.detach().numpy()))
-#         total+=t.shape[0]
-#     return correct/total
-
 def average_model_error(model, data):
     data_loader = DataLoader(data, batch_size=512)
     model.eval()
@@ -174,11 +163,13 @@ if __name__ == '__main__':
         x_t_pairs = datap.make_x_t_tuple_tensor_pairs_in_place(data, 30, 5)  
         train_data = x_t_pairs[:1000]
         valid_data = x_t_pairs[1000:]
+        
+        # LSTM model test
+        LSTMModel = model.LSTM(4,4,50,3)
+        train_model(LSTMModel,train_data,valid_data,num_epochs=10,
+                  learning_rate=0.001)
     
-        # LSTMModel = model.LSTM(4,4,50,3)
-        # train_model(LSTMModel,train_loader,valid_loader,num_epochs=10,
-        #           learning_rate=0.001)
-    
+        # Forecaster model test
         mod = model.Forecaster(input_features=4,encoder_hidden_features=10,
                                forecaster_hidden_features=4,output_length=5)
         train_model(mod,train_data,valid_data,num_epochs=500,
