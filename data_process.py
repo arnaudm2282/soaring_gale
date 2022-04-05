@@ -461,7 +461,7 @@ def normalize_single_stock(data):
         shape (N, M)
     '''
     norm_data = np.empty((0,data.shape[1]))
-    
+
     for days in data:
       min_price = min(days)
       max_price = max(days)
@@ -546,7 +546,7 @@ if __name__ == '__main__':
         
     
     # normalize data example
-    if True:
+    if False:
         test, val, train = split_etfs(etf_files)
         train_sample = train[1:5]
         train_start_date = '2017-01-01'
