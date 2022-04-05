@@ -81,7 +81,6 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     for epoch in range(num_epochs):
         for x, t in iter(train_loader):
             model.train()
-            # for input, output in train:
             
             # model output
             pred = model.forward(x)
