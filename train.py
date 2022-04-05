@@ -27,7 +27,28 @@ def get_accuracy(model, data):
 def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5, 
               batch_size=256, criteria='mse', verbose=True):
     final=np.empty((0,))
+    '''
+    Optimize model on train data.
     
+    Arguments:
+        train, valid : list of (x,t) tuple
+            x - inputs
+            t - targets
+            
+        num_epochs : int
+            number of epochs to perform
+            
+        batch_size : int
+            number of samples per batch
+            
+        criteria : string
+            specify the loss function.
+            'mse' => MSE
+            SmoothL1 otherwise
+            
+        verbose : bool
+            if True, prints model performance at the end of each epoch
+    '''
     # loss function
     criterion = None
     if criteria == 'mse':
