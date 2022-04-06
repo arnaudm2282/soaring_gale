@@ -32,6 +32,7 @@ class RNN(nn.Module):
         out = self.fc(out[:,:5,:])
         return out
 
+
 class LSTM(nn.Module):
     def __init__(self,input_size,output_size,hidden,layers):
         super(LSTM,self).__init__()
@@ -104,6 +105,7 @@ class Forecaster(nn.Module):
         forecaster_o, forecaster_h_n = self.forecaster(encoder_o)
         out = forecaster_o[:,:self.output_length,:]
         return out
+
 
 if __name__ == '__main__':
     if False:
