@@ -26,7 +26,6 @@ def average_model_error(model, data):
 
 def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5, 
               batch_size=256, criteria='mse', verbose=True):
-    final=np.empty((0,))
     '''
     Optimize model on train data.
     
@@ -79,10 +78,6 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            
-            # to plot final epoch of predictions
-            if epoch==num_epochs-1:
-                final = np.append(final,pred.detach().numpy()[:,1])
         
         # add performance to tracking variables
         losses.append(float(loss))
@@ -103,26 +98,17 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.title("Training Curve")
     plt.plot(epochs, train_error, 'b-',label="Train")
     
-    plt.title('Train loss')
+    plt.title('Train Error')
     plt.xlabel("Epoch")
     plt.ylabel("Train Error", color='b')
     
     plt.legend(loc='best')
     plt.show()
 
-    plt.title('Valid Loss')
+    plt.title('Valid Error')
     plt.plot(epochs, valid_error, 'y-',label="Validation")
     plt.xlabel("Epoch")
     plt.ylabel("Valid Error", color='y')
-    plt.legend(loc='best')
-    plt.show()
-
-    # TODO seperate function for one timeseries of price data.
-    # data above can be from many ETFs during training.
-    plt.title('Forecast TODO')
-    plt.plot(range(int(len(final)/4)),final[1::4],label='Prediction')
-    plt.xlabel("Day")
-    plt.ylabel("Prediction", color='y')
     plt.legend(loc='best')
     plt.show()
     
@@ -149,6 +135,44 @@ def plot_ohlc_timeseries(data, title='timeseries'):
     plt.ylabel('price')
     plt.legend(loc='best')
     plt.show()
+    
+
+def plot_model_forecast(model, data, title='model forecast', 
+                        context_length=30):
+    '''
+    Plot models forecast for data based on step through slicing data into 
+    inputs of context length
+
+    Parameters
+    ----------
+    model : torch model
+    data : numpy array float32
+        - shape (N,M)
+    title : string
+        Title for pyplot
+    context_length : int
+        input length to feed model from data
+    '''
+    model.eval()
+    final=np.empty((0,))
+    
+    N = data.shape[0]
+    
+    for i in range(N - context_length):
+        x = data[i:i+context_length]
+        x = x[None,:,:]
+        x = torch.from_numpy(x)
+        pred = model.forward(x)
+        
+        final = np.append(final,pred.detach().numpy()[:,1])
+        
+    plt.title('Forecast')
+    plt.plot(range(int(len(final)/4)),final[1::4],label='Prediction')
+    plt.xlabel("Day")
+    plt.ylabel("Prediction", color='y')
+    plt.legend(loc='best')
+    plt.show()
+
 
 # %%
 
@@ -169,10 +193,21 @@ if __name__ == '__main__':
         train_model(LSTMModel,train_data,valid_data,num_epochs=10,
                   learning_rate=0.001)
     
+    if False:
+        data = []
+        _, data = datap.load_price_data_into_numpy_array('aadr.us.txt', 
+                                           './data/ETFs')
+        data = datap.remove_volume_open_interest(data)  
+        x_t_pairs = datap.make_x_t_tuple_tensor_pairs_in_place(data, 30, 5)  
+        train_data = x_t_pairs[:1000]
+        valid_data = x_t_pairs[1000:]
+        
         # Forecaster model test
         mod = model.Forecaster(input_features=4,encoder_hidden_features=10,
                                forecaster_hidden_features=4,output_length=5)
-        train_model(mod,train_data,valid_data,num_epochs=500,
+        train_model(mod,train_data,valid_data,num_epochs=25,
                     learning_rate=0.001)
+        
+        plot_model_forecast(mod, data)
     
         
