@@ -118,7 +118,7 @@ class Forecaster_fc_hidden(nn.Module):
                               batch_first=True)
         
         self.fc_hidden = nn.Linear(encoder_hidden_features, fc_hidden)
-        
+        self.fc_activation = nn.ReLU()
         self.fc_out = nn.Linear(fc_hidden, output_length * input_features)
         
         self.output_length = output_length
@@ -131,6 +131,7 @@ class Forecaster_fc_hidden(nn.Module):
         fc_input = torch.flatten(encoder_h_n.permute(1,0,2), start_dim=1,
                                  end_dim=-1)
         out = self.fc_hidden(fc_input)
+        out = self.fc_activation(out)
         out = self.fc_out(out)
         
         out = out.reshape(N, self.output_length, self.input_features)
