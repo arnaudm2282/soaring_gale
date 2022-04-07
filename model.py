@@ -10,6 +10,7 @@ import csv
 import datetime
 import matplotlib.pyplot as plt
 import data_process as datap
+import math
 #from google.colab import drive
 
 
@@ -76,6 +77,62 @@ class Forecaster(nn.Module):
         #print('f shape', forecaster_o.shape, forecaster_h_n.shape)
         out = self.fc(forecaster_o[:,:5,:])
         return out#, forecaster_h_n
+
+class PositionalEncoding(nn.Module):
+    def __init__(self,d_model, dropout,max_len=1):
+        super().__init__()
+        self.dropout = nn.Dropout(p=dropout)
+
+        pose = torch.zeros(max_len,1,d_model)
+        pos = torch.arange(0,max_len,dtype=torch.float).unsqueeze(1)
+        div = torch.exp(torch.arange(0, d_model, 2).float() * (-math.log(1000.0)/ d_model))
+        pose[:, 0,0::2] = torch.sin(pos * div)
+        pose[:,0,1::2] = torch.cos(pos*div)
+        #pose = pose.unsqueeze(0)
+        self.register_buffer('pose',pose)
+
+    def forward(self, x):
+        t = self.pose[:, :x.size(1)]
+        x = x + t
+        return x
+
+class TransformerModel(nn.Module):
+
+    def __init__(self,ntoken,d_model,nhead,d_hid,nlayers,dropout=0.5):
+        super().__init__()
+        self.pos_encoder = PositionalEncoding(d_model, dropout)
+        encoder_layers = nn.TransformerEncoderLayer(d_model, nhead, d_hid,dropout)
+        self.transformer_encoder = nn.TransformerEncoder(encoder_layers, nlayers)
+        #self.encoder = nn.Embedding(ntoken, d_model)
+        self.d_model = d_model
+        self.decoder = nn.Linear(d_model, ntoken)
+
+        self.init_weights()
+
+    def init_weights(self) -> None:
+        initrange = 0.1
+        #self.encoder.weight.data.uniform_(-initrange, initrange)
+        self.decoder.bias.data.zero_()
+        self.decoder.weight.data.uniform_(-initrange, initrange)
+
+    def forward(self, src:torch.Tensor, src_mask: torch.Tensor):
+        """
+        Args:
+            src: Tensor, shape [seq_len, batch_size]
+            src_mask: Tensor, shape [seq_len, seq_len]
+
+        Returns:
+            output Tensor of shape [seq_len, batch_size, ntoken]
+        """
+        #src = self.encoder(src) * math.sqrt(self.d_model)
+        src = self.pos_encoder(src)
+        output = self.transformer_encoder(src, src_mask)
+        output = self.decoder(output)
+        return output[:,:5,:]
+
+def generate_square_subsequent_mask(sz):
+    """Generates an upper-triangular matrix of -inf, with zeros on diag."""
+    return torch.triu(torch.ones(sz, sz) * float('-inf'), diagonal=1)
 
 if __name__ == '__main__':
     

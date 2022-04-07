@@ -10,16 +10,16 @@ import csv
 import datetime
 import matplotlib.pyplot as plt
 import data_process as datap
-import model
+import model as Model
 
-def get_accuracy(model, test):
+def get_accuracy(model, test, mask = None):
     correct, total = 0, 0
     for input, output in test:
         
         
         
         
-        out = model(input)
+        out = model(input, mask)
         correct+=np.sum(np.abs(out.detach().numpy() -output.detach().numpy()))
         total+=output.shape[0]
     return correct/total
@@ -34,6 +34,7 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
     optimizer = torch.optim.Adam(model.parameters(),lr=learning_rate)
     losses, train_acc, valid_acc = [], [], []
     epochs = []
+    src_mask = Model.generate_square_subsequent_mask(30)
     for epoch in range(num_epochs):
         
         
@@ -43,7 +44,8 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
         for input, output in train:
             
             #input = input.permute(0,2,1)
-            pred = model(input)
+            pred = model(input,src_mask)
+            #pred = model(input)
             loss = criterion(pred,output)
             optimizer.zero_grad()
             loss.backward()
@@ -56,8 +58,8 @@ def train_RNN(model, train, valid, num_epochs=5, learning_rate=1e-5):
         losses.append(float(loss))
 
         epochs.append(epoch)
-        train_acc.append(get_accuracy(model, train))
-        valid_acc.append(get_accuracy(model, valid))
+        train_acc.append(get_accuracy(model, train, src_mask))
+        valid_acc.append(get_accuracy(model, valid, src_mask))
         print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
                 epoch+1, loss, train_acc[-1], valid_acc[-1]))
     plt.title("Training Curve")
@@ -99,6 +101,6 @@ if __name__ == '__main__':
     train_loader = DataLoader(x_t_pairs[:1000],batch_size=30,shuffle=False,drop_last=True)
     valid_loader = DataLoader(x_t_pairs[1000:],batch_size=30,shuffle=False,drop_last=True)
 
-    LSTMModel = model.LSTM(4,4,50,3)
+    LSTMModel = Model.TransformerModel(4,4,4,200,10,0.2)
 
     train_RNN(LSTMModel,train_loader,valid_loader,num_epochs=100,learning_rate=0.001)
