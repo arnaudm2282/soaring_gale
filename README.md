@@ -26,11 +26,11 @@ Data split writeup
 
 # Training
 
+Hyperparameter tuning, summarize hyperparameters of final model.
+
 # Results
 
 Training curves
-
-Hyperparameter tuning, summarize hyperparameters of final model.
 
 Quantitative measure desciption
 
