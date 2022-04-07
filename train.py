@@ -20,7 +20,7 @@ def average_model_error(model, data):
     N = len(data)
     for x, t in iter(data_loader):
         out = model.forward(x)
-        error += torch.sum((t.detach() - out.detach() ** 2))
+        error += torch.sum((t.detach() - out.detach()) ** 2)
     return error / N
 
 
