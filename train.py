@@ -12,6 +12,13 @@ import matplotlib.pyplot as plt
 import data_process as datap
 import model
 
+
+def checkpoint(model, path, checkpoint_name):
+    save_path = '{}/{}.pt'.format(path, checkpoint_name)
+    torch.save(model.state_dict(), save_path)
+    return
+
+
 def average_model_error(model, data):
     data_loader = DataLoader(data, batch_size=512)
     model.eval()
