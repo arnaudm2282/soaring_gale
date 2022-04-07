@@ -531,7 +531,11 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
     
     return
 
-def single_stock_data(single_stock, file_path, single_point_start_date, single_point_end_date):
+
+# %% Create Small Dataset Functions
+
+def single_stock_data(single_stock, file_path, single_point_start_date,
+                      single_point_end_date):
   '''
   Parameters
   ----------
@@ -545,16 +549,22 @@ def single_stock_data(single_stock, file_path, single_point_start_date, single_p
   single_training_point: List of tuple_tensor_pair
   '''
 
-  num_array = load_price_data_into_numpy_array(single_stock,file_path, process_data=remove_volume_open_interest)
+  num_array = load_price_data_into_numpy_array(single_stock,file_path,
+                                      process_data=remove_volume_open_interest)
 
-  date_range_data = get_specific_date_data(num_array[0],num_array[1],single_point_start_date,single_point_end_date)
+  date_range_data = get_specific_date_data(num_array[0],num_array[1],
+                                           single_point_start_date,
+                                           single_point_end_date)
 
-  single_training_point = make_x_t_tuple_tensor_pairs_in_place(date_range_data, input_length=10, output_length=5)
+  single_training_point = make_x_t_tuple_tensor_pairs_in_place(date_range_data,
+                                                               input_length=10,
+                                                               output_length=5)
 
   return single_training_point
 
 
-def small_data(training_data, file_path, stock_start_date, stock_end_date,n_stocks):
+def small_data(training_data, file_path, stock_start_date, stock_end_date,
+               n_stocks):
   '''
   Parameters
   ----------
@@ -573,7 +583,9 @@ def small_data(training_data, file_path, stock_start_date, stock_end_date,n_stoc
 
   for stocks in stock_data:
 
-    single_stock_training_points = single_stock_data(stocks, file_path, stock_start_date, stock_end_date)
+    single_stock_training_points = single_stock_data(stocks, file_path,
+                                                     stock_start_date,
+                                                     stock_end_date)
     training_points += single_stock_training_points
 
   return training_points
