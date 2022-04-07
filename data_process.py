@@ -339,6 +339,131 @@ def data_split_symbol_and_date(train_files, val_files, test_files, path,
     return train, val, test
 
 
+# %% Normalize data functions
+
+def get_specific_date_data(date_data, data, start_date='2000-01-01', end_date='2020-01-01'):
+    '''
+    Parameters
+    ----------
+    date_data : numpy array dtype '<U10'
+        - shape (N,1)
+        - array of string formatted dates 'YYYY-mm-dd'
+    data : numpy array dtype 'float32'
+        - shape (N,M)
+        - N timesteps of M data features
+    start_date : string date 'YYYY-mm-dd'
+    end_date : string date 'YYYY-mm-dd'
+
+    Returns
+    -------
+    data_in_range : array shape (Q,M) - timesteps within date range
+    '''
+    N = data.shape[0]
+    start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    end_date = datetime.datetime.strptime(end_date, '%Y-%m-%d')
+    
+    # start, end indexes corresponding to dates
+    start_index = -1
+    end_index = -1
+    for i in range(N):
+        date_i = datetime.datetime.strptime(date_data[i,0], '%Y-%m-%d')
+        
+        # train dates
+        if date_i >= start_date and start_index == -1:
+            start_index = int(i)
+        elif date_i >= end_date and end_index == -1:
+            end_index = int(i)
+    
+    data_in_range = data[start_index:end_index]
+
+    return data_in_range
+
+
+def normalize_single_stock(data):
+    '''
+    normalize each day of prices in data.
+    
+    Parameters
+    ----------
+    data_date : numpy array dtype 'float32'
+        shape (N, M)
+
+    Returns
+    -------
+    norm_data : numpy array dtype 'float32'
+        shape (N, M)
+    '''
+    norm_data = np.empty((0,data.shape[1]))
+
+    for days in data:
+        min_price = min(days)
+        max_price = max(days)
+        normalize_data = (days-min_price)/(max_price-min_price)
+        norm_data = np.append(norm_data,np.array([normalize_data]),axis=0)
+
+    return norm_data
+
+
+def normalize_as_avg_price(data):
+    '''
+    Parameters
+    ----------
+    data : array shape (N,4)
+        N timesteps of Open, High, Low, Close data
+    '''
+    avg_daily_price = np.average(data, axis=1)
+    
+    norm_data = data / avg_daily_price.reshape(-1,1)
+    
+    return norm_data
+
+
+def normalize_train_data(train_data, path_name, train_start_date, train_end_date,
+                         x_length=30, t_length=5, 
+                         normalizer=normalize_single_stock):
+    '''
+    return normalized (x,t) pairs from train_data.
+    
+    Parameters
+    ----------
+    train_data : list CSV files, in which each file represents a unique stock.
+    
+    path_name : directory containing data CSV files.
+
+    train_start_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
+
+    train_end_date: string formatted date 'YYYY-mm-dd', e.g. '2022-01-15'
+
+    normalizer - function(data: array shape (N,M))
+        - should return normalized version of its array argument
+
+    Returns
+    -------
+    normalized_data : List of (x,t) tuple tensor_pairs
+        - x shape (x_length, 4)
+        - t shape (t_length, 4)
+    '''
+    normalized_data = []
+
+    
+    for stock in train_data:
+        numpy_data = load_price_data_into_numpy_array(stock,path_name,
+                                                      process_data=remove_volume_open_interest)
+  
+        date_data = get_specific_date_data(numpy_data[0], numpy_data[1],
+                                           train_start_date, train_end_date)
+  
+  
+        norm_data = normalizer(date_data)
+  
+        pairs=make_x_t_tuple_tensor_pairs_in_place(norm_data,
+                                                   input_length=x_length,
+                                                   output_length=t_length)
+        normalized_data += pairs
+      
+    return normalized_data
+
+
 # %% Augment data functions
 
 def add_noise_to_data_point(data_point):
@@ -406,7 +531,66 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
     
     return
 
-    
+
+# %% Create Small Dataset Functions
+
+def single_stock_data(single_stock, file_path, single_point_start_date,
+                      single_point_end_date):
+  '''
+  Parameters
+  ----------
+  single_stock: single stock csv files
+  file_path: String representation of file path
+  single_point_start_date: Start date of stock data
+  single_point_end_date: End date of stock data
+
+  Returns
+  -------
+  single_training_point: List of tuple_tensor_pair
+  '''
+
+  num_array = load_price_data_into_numpy_array(single_stock,file_path,
+                                      process_data=remove_volume_open_interest)
+
+  date_range_data = get_specific_date_data(num_array[0],num_array[1],
+                                           single_point_start_date,
+                                           single_point_end_date)
+
+  single_training_point = make_x_t_tuple_tensor_pairs_in_place(date_range_data,
+                                                               input_length=10,
+                                                               output_length=5)
+
+  return single_training_point
+
+
+def small_data(training_data, file_path, stock_start_date, stock_end_date,
+               n_stocks):
+  '''
+  Parameters
+  ----------
+  training_data: list of csv files where each csv file represents a single stock.
+  file_path: String representation of file path
+  stock_start_date: Start date of stock data
+  stock_end_date: End date of stock data
+  n_stock: The number of stocks 
+
+  Returns
+  -------
+  training_points: List of tuple_tensor_pairs
+  '''
+  training_points = []
+  stock_data = random.sample(training_data,n_stocks)
+
+  for stocks in stock_data:
+
+    single_stock_training_points = single_stock_data(stocks, file_path,
+                                                     stock_start_date,
+                                                     stock_end_date)
+    training_points += single_stock_training_points
+
+  return training_points
+
+
 # %% If running this file standalone
 
 if __name__ == '__main__':
@@ -447,4 +631,64 @@ if __name__ == '__main__':
         print('len(train):', len(train_data))
         print('len(val):', len(val_data))
         print('len(test):', len(test_data))
+        
+    
+    # normalize data example
+    if False:
+        test, val, train = split_etfs(etf_files)
+        train_sample = train[1:5]
+        train_start_date = '2010-01-01'
+        train_end_date = '2017-02-02'
+        
+        # normalize_single_stock normalizer
+        normalized_data = normalize_train_data(train_sample,
+                                               etfs_path,
+                                               train_start_date,
+                                               train_end_date)
+        print('len(normalized_data):', len(normalized_data))
+        
+        data_point = normalized_data[0]
+        x, t = data_point
+        print(x.shape)
+        print(t.shape)
+        
+        # normalize_as_avg_price normalizer
+        normalized_data = normalize_train_data(train_sample,
+                                               etfs_path,
+                                               train_start_date,
+                                               train_end_date,
+                                               normalizer=normalize_as_avg_price)
+        print('len(normalized_data):', len(normalized_data))
+        
+        data_point = normalized_data[0]
+        x, t = data_point
+        print(x.shape)
+        print(t.shape)
 
+    # Small data example
+    if False:
+        test, val, train = split_etfs(etf_files)
+        train_start_date = '2010-01-01'
+        train_end_date = '2017-02-02'
+
+        # Single data point
+        single_stock_training_data = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=1)
+        print('len(single_stock_training_data):', len(single_stock_training_data))
+        
+        data_point = single_stock_training_data[0]
+        x, t = data_point
+        print(x.shape)
+        print(t.shape)
+
+        # Small data set containing data of 5 stocks
+        small_data_set = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=5)
+        print('len(small_data_set):', len(small_data_set))
+        
+        stocks_data_point = small_data_set[0]
+        one_stock_x, one_stock_t = stocks_data_point
+        print(one_stock_x.shape)
+        print(one_stock_t.shape)
+
+
+
+# %%
