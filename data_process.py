@@ -531,6 +531,53 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
     
     return
 
+def single_stock_data(single_stock, file_path, single_point_start_date, single_point_end_date):
+  '''
+  Parameters
+  ----------
+  single_stock: single stock csv files
+  file_path: String representation of file path
+  single_point_start_date: Start date of stock data
+  single_point_end_date: End date of stock data
+
+  Returns
+  -------
+  single_training_point: List of tuple_tensor_pair
+  '''
+
+  num_array = load_price_data_into_numpy_array(single_stock,file_path, process_data=remove_volume_open_interest)
+
+  date_range_data = get_specific_date_data(num_array[0],num_array[1],single_point_start_date,single_point_end_date)
+
+  single_training_point = make_x_t_tuple_tensor_pairs_in_place(date_range_data, input_length=10, output_length=5)
+
+  return single_training_point
+
+
+def small_data(training_data, file_path, stock_start_date, stock_end_date,n_stocks):
+  '''
+  Parameters
+  ----------
+  training_data: list of csv files where each csv file represents a single stock.
+  file_path: String representation of file path
+  stock_start_date: Start date of stock data
+  stock_end_date: End date of stock data
+  n_stock: The number of stocks 
+
+  Returns
+  -------
+  training_points: List of tuple_tensor_pairs
+  '''
+  training_points = []
+  stock_data = random.sample(training_data,n_stocks)
+
+  for stocks in stock_data:
+
+    single_stock_training_points = single_stock_data(stocks, file_path, stock_start_date, stock_end_date)
+    training_points += single_stock_training_points
+
+  return training_points
+
 
 # %% If running this file standalone
 
@@ -605,6 +652,31 @@ if __name__ == '__main__':
         x, t = data_point
         print(x.shape)
         print(t.shape)
+
+    # Small data example
+    if False:
+        test, val, train = split_etfs(etf_files)
+        train_start_date = '2010-01-01'
+        train_end_date = '2017-02-02'
+
+        # Single data point
+        single_stock_training_data = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=1)
+        print('len(single_stock_training_data):', len(single_stock_training_data))
+        
+        data_point = single_stock_training_data[0]
+        x, t = data_point
+        print(x.shape)
+        print(t.shape)
+
+        # Small data set containing data of 5 stocks
+        small_data_set = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=5)
+        print('len(small_data_set):', len(small_data_set))
+        
+        stocks_data_point = small_data_set[0]
+        one_stock_x, one_stock_t = stocks_data_point
+        print(one_stock_x.shape)
+        print(one_stock_t.shape)
+
 
 
 # %%
