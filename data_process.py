@@ -535,7 +535,7 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
 # %% Create Small Dataset Functions
 
 def single_stock_data(single_stock, file_path, single_point_start_date,
-                      single_point_end_date):
+                      single_point_end_date, process_data_func):
   '''
   Parameters
   ----------
@@ -550,7 +550,7 @@ def single_stock_data(single_stock, file_path, single_point_start_date,
   '''
 
   num_array = load_price_data_into_numpy_array(single_stock,file_path,
-                                      process_data=remove_volume_open_interest)
+                                      process_data=process_data_func)
 
   date_range_data = get_specific_date_data(num_array[0],num_array[1],
                                            single_point_start_date,
@@ -564,7 +564,7 @@ def single_stock_data(single_stock, file_path, single_point_start_date,
 
 
 def small_data(training_data, file_path, stock_start_date, stock_end_date,
-               n_stocks):
+               n_stocks, process_data_func):
   '''
   Parameters
   ----------
@@ -585,7 +585,9 @@ def small_data(training_data, file_path, stock_start_date, stock_end_date,
 
     single_stock_training_points = single_stock_data(stocks, file_path,
                                                      stock_start_date,
-                                                     stock_end_date)
+                                                     stock_end_date,
+                                                     process_data_func=process_data_func)
+
     training_points += single_stock_training_points
 
   return training_points
@@ -672,7 +674,7 @@ if __name__ == '__main__':
         train_end_date = '2017-02-02'
 
         # Single data point
-        single_stock_training_data = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=1)
+        single_stock_training_data = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=1,process_data_func=remove_volume_open_interest)
         print('len(single_stock_training_data):', len(single_stock_training_data))
         
         data_point = single_stock_training_data[0]
@@ -681,7 +683,7 @@ if __name__ == '__main__':
         print(t.shape)
 
         # Small data set containing data of 5 stocks
-        small_data_set = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=5)
+        small_data_set = small_data(train,etfs_path,train_start_date,train_end_date,n_stocks=5, process_data_func=remove_volume_open_interest)
         print('len(small_data_set):', len(small_data_set))
         
         stocks_data_point = small_data_set[0]
