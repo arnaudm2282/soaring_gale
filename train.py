@@ -32,7 +32,8 @@ def average_model_error(model, data):
 
 
 def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5, 
-              batch_size=256, criteria='mse', verbose=True):
+              batch_size=256, criteria='mse', verbose=True,
+              checkpoint_path=None, checkpoint_name=None):
     '''
     Optimize model on train data.
     
@@ -94,7 +95,9 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
         if verbose:
             print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
                     epoch+1, loss, train_error[-1], valid_error[-1]))
-        
+            
+        if checkpoint_path and checkpoint_name:
+            checkpoint(model, checkpoint_path, checkpoint_name + f'epoch_{epoch}')
 
     plt.title("Training Curve")
     plt.plot(losses, label="Train")
@@ -216,5 +219,14 @@ if __name__ == '__main__':
                     learning_rate=0.001)
         
         plot_model_forecast(mod, data)
-    
         
+    # test checkpointing
+    if False:
+        mod = nn.Linear(10,10)
+        
+        x = torch.randn(10,10)
+        t = torch.randn(10,10)
+        
+        train_model(mod, [(x,t)], [(x,t)], 
+                    checkpoint_path='/home/am/Desktop/temp',
+                    checkpoint_name='testtest', num_epochs=10, batch_size=1)
