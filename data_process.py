@@ -570,7 +570,7 @@ def single_stock_data(single_stock, file_path, single_point_start_date,
 
 
 def small_data(training_data, file_path, stock_start_date, stock_end_date,
-               n_stocks, process_data_func):
+               n_stocks, process_data):
   '''
   Parameters
   ----------
@@ -592,7 +592,7 @@ def small_data(training_data, file_path, stock_start_date, stock_end_date,
     single_stock_training_points = single_stock_data(stocks, file_path,
                                                      stock_start_date,
                                                      stock_end_date,
-                                                     process_data_func=process_data_func)
+                                                     process_data_func=process_data)
 
     training_points += single_stock_training_points
 
