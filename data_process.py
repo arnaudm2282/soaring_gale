@@ -13,9 +13,15 @@ import random
 
 def remove_volume_open_interest(data):
     '''
-    remove volume and open interest columns from data (columns 5 and 6)
+    Remove volume and open interest columns from data (columns 5 and 6)
     '''
     return data[:,:-2]
+
+def only_close(data):
+    '''
+    Remove all columns except Close
+    '''
+    return data[:,3].reshape(-1,1)
 
 def load_price_data_into_numpy_array(file_name, file_path, process_data=None):
     '''
