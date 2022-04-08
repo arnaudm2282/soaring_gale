@@ -164,3 +164,33 @@ if False:
                       learning_rate=1e-5,
                       checkpoint_path=checkpoint_path,
                       checkpoint_name=model_name)
+
+
+# Train small data, with single feature 
+if False:
+    etfs_path = './data/ETFs'
+    etf_files = os.listdir(etfs_path)
+    train_start_date, train_end_date = '2014-01-01', '2016-01-01'
+    val_end_date = '2017-01-01'
+
+    data = []
+    test, val, train = datap.split_etfs(etf_files)
+
+    train_data = datap.small_data(train, etfs_path, train_start_date, 
+                                    train_end_date, 20, process_data=datap.only_close)
+
+    valid_data = datap.small_data(val, etfs_path, train_end_date, 
+                                    val_end_date, 5, process_data=datap.only_close)
+
+    mod = model.Forecaster_fc_hidden(input_features=1,encoder_hidden_features=150, 
+                                    fc_hidden=75,output_length=5)
+
+    model_name = 'Small Data forecaster_fc_hidden(1,150,75,5)'
+    checkpoint_path = './checkpoints/small_data_forecaster_fc_hidden_20'
+    train.train_model(m, train_data, valid_data, num_epochs=20, 
+                      learning_rate=0.001,
+                      checkpoint_path=checkpoint_path,
+                      checkpoint_name=model_name)
+
+
+
