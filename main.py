@@ -95,3 +95,72 @@ if False:
         print('actual target', min_t)
         
     find_best_test_point(m, test_data)
+    
+    
+# %% 250 epoch forecaster_fc_hidden, lstm
+
+if False:
+    etfs_path = './data/ETFs'
+    etf_files = os.listdir(etfs_path)
+    
+    def only_close(data):
+        return data[:,3].reshape(-1,1)
+    
+    train_start_date, train_end_date = '2010-01-01', '2013-01-01'
+    val_start_date, val_end_date = train_end_date, '2015-01-01'
+    test_start_date, test_end_date = val_end_date, '2030-01-01'
+    
+    train_data, val_data, test_data = \
+      datap.date_make_train_val_test_data(etfs_path,
+                                          train_start_date=train_start_date,
+                                          train_end_date=train_end_date,
+                                          val_start_date=val_start_date,
+                                          val_end_date=val_end_date,
+                                          test_start_date=test_start_date,
+                                          test_end_date=test_end_date,
+                                          process_data_func=only_close)
+    
+    print('len(train):', len(train_data))
+    print('len(val):', len(val_data))
+    print('len(test):', len(test_data))
+    
+    print('x,t shape', train_data[0][0].shape, train_data[0][1].shape)
+    
+    #augment data
+    datap.augment(train_data, augment_func=datap.translate_price)
+    
+    print('len(train):', len(train_data))
+    print('len(val):', len(val_data))
+    print('len(test):', len(test_data))
+    
+    print('x,t shape', train_data[0][0].shape, train_data[0][1].shape)
+    
+    # model forecaster
+    m = model.Forecaster_fc_hidden(input_features=1,
+                                    encoder_hidden_features=100,
+                                    fc_hidden=100,
+                                    output_length=5)
+    
+    # train forecaster
+    model_name = 'forecaster_fc_hidden(1,100,100,5)'
+    checkpoint_path = './checkpoints/forecaster_fc_hidden_250'
+    train.train_model(m, train_data, val_data, num_epochs=250, 
+                      batch_size=10000,
+                      learning_rate=1e-5,
+                      checkpoint_path=checkpoint_path,
+                      checkpoint_name=model_name)
+    
+    # model lstm
+    m = model.LSTM(input_size=1,
+                   output_size=1,
+                   hidden=100,
+                   layers=1)
+    
+    # train lstm
+    model_name = 'LSTM(1,1,100,1)'
+    checkpoint_path = './checkpoints/lstm_250'
+    train.train_model(m, train_data, val_data, num_epochs=250, 
+                      batch_size=10000,
+                      learning_rate=1e-5,
+                      checkpoint_path=checkpoint_path,
+                      checkpoint_name=model_name)
