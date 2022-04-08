@@ -177,10 +177,10 @@ if False:
     test, val, train = datap.split_etfs(etf_files)
 
     train_data = datap.small_data(train, etfs_path, train_start_date, 
-                                    train_end_date, 20, process_data=datap.only_close)
+                                    train_end_date, 20, process_data=datap.only_close)  # Contains 20 random ETFs
 
     valid_data = datap.small_data(val, etfs_path, train_end_date, 
-                                    val_end_date, 5, process_data=datap.only_close)
+                                    val_end_date, 5, process_data=datap.only_close)  # Contains 5 random ETFs
 
     mod = model.Forecaster_fc_hidden(input_features=1,encoder_hidden_features=150, 
                                     fc_hidden=75,output_length=5)
