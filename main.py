@@ -164,3 +164,33 @@ if False:
                       learning_rate=1e-5,
                       checkpoint_path=checkpoint_path,
                       checkpoint_name=model_name)
+    
+# model prediction examples
+if False:
+    mod = model.Forecaster_fc_hidden(input_features=1,
+                                    encoder_hidden_features=100,
+                                    fc_hidden=100,
+                                    output_length=5)
+    
+    saved_params_dict = './checkpoints/forecaster_fc_hidden_250/forecaster_fc_hidden(1,100,100,5)epoch_249.pt'
+    mod.load_state_dict(torch.load(saved_params_dict))
+    
+    t_data = test_data[:5000]
+    def plot_forecast(model, x, t):
+        N = t.shape[0]
+        y = model.forward(x[None,:,:]).detach().numpy()
+        
+        plt.title('Actual')
+        plt.plot(np.arange(N).reshape(-1,1), t)
+        plt.show()
+        
+        plt.title('Predicted')
+        plt.plot(np.arange(N).reshape(-1,1), y.reshape(-1,1))
+        plt.show()
+        
+    for i in range(20):
+        x,t = t_data[i]
+        plot_forecast(mod, x, t)
+    
+    pass
+    
