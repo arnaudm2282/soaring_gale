@@ -1,3 +1,9 @@
+'''
+This file contains the main functions used for optimizaing the model on 
+training data, checkpointing models, and charting model forecasts for 
+qualitative analysis.
+'''
+
 import torch
 import sklearn
 from sklearn.preprocessing import MinMaxScaler
@@ -184,7 +190,7 @@ def plot_model_forecast(model, data, title='model forecast',
     plt.show()
 
 
-# %%
+# %% Testing code if running this file alone
 
 if __name__ == '__main__':
     if False:
