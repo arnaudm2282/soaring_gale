@@ -1,5 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+'''
+This file contains the functions we used to process the data from CSV text 
+files into (x,t) tuple tensor pairs that were used in training.
+'''
 
 import os
 import numpy as np
@@ -9,7 +11,7 @@ import math
 import datetime
 import random
 
-# %%
+# %% Functions for loading data from the CSV files
 
 def remove_volume_open_interest(data):
     '''
@@ -52,7 +54,7 @@ def load_price_data_into_numpy_array(file_name, file_path, process_data=None):
         return (dates_array, data_array)
 
 
-# %%
+# %% Function for making datapoints and the corresponding targets
 
 def make_x_t_tuple_tensor_pairs_in_place(data, input_length=10, 
                                          output_length=5):
@@ -205,7 +207,7 @@ def date_make_train_val_test_data(data_directory, x_length=30, t_length=5,
     return train, val, test
 
 
-# %% Split ETFs into train, val, test by symbol and date
+# %% Functions to split data into train, val, and test sets by symbol and date
 
 def split_etfs(etfs, use_seed=True, random_seed=42):
     '''
@@ -339,7 +341,7 @@ def data_split_symbol_and_date(train_files, val_files, test_files, path,
     return train, val, test
 
 
-# %% Normalize data functions
+# %% Functions to normalize price data
 
 def get_specific_date_data(date_data, data, start_date='2000-01-01', end_date='2020-01-01'):
     '''
@@ -464,7 +466,7 @@ def normalize_train_data(train_data, path_name, train_start_date, train_end_date
     return normalized_data
 
 
-# %% Augment data functions
+# %% Functions to augment a dataset
 
 def add_noise_to_data_point(data_point):
     '''
@@ -532,7 +534,7 @@ def augment(data, augment_func=add_noise_to_data_point, augment_proportion=0.5,
     return
 
 
-# %% Create Small Dataset Functions
+# %% Functions for creating small datasets
 
 def single_stock_data(single_stock, file_path, single_point_start_date,
                       single_point_end_date):
@@ -591,7 +593,7 @@ def small_data(training_data, file_path, stock_start_date, stock_end_date,
   return training_points
 
 
-# %% If running this file standalone
+# %% Testing code if running this file standalone
 
 if __name__ == '__main__':
     etfs_path = './data/ETFs'
@@ -688,7 +690,3 @@ if __name__ == '__main__':
         one_stock_x, one_stock_t = stocks_data_point
         print(one_stock_x.shape)
         print(one_stock_t.shape)
-
-
-
-# %%
