@@ -72,6 +72,7 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     # variables to track model performance
     losses, train_error, valid_error = [], [], []
     epochs = []
+    train_acc, valid_acc = [], []
     
     # optimize model
     for epoch in range(num_epochs):
@@ -92,6 +93,9 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
         epochs.append(epoch)
         train_error.append(average_model_error(model, train))
         valid_error.append(average_model_error(model, valid))
+        train_acc.append(train_error[-1])
+        valid_acc.append(valid_error[-1])
+
         if verbose:
             print("Epoch %d; Loss %f; Train Acc %f; Val Acc %f" % (
                     epoch+1, loss, train_error[-1], valid_error[-1]))
@@ -119,6 +123,14 @@ def train_model(model, train, valid, num_epochs=5, learning_rate=1e-5,
     plt.plot(epochs, valid_error, 'y-',label="Validation")
     plt.xlabel("Epoch")
     plt.ylabel("Valid Error", color='y')
+    plt.legend(loc='best')
+    plt.show()
+
+    plt.title("Learning Curve")
+    plt.plot(epochs, train_acc, label="Train")
+    plt.plot(epochs, valid_acc, label="Validation")
+    plt.xlabel("Iterations")
+    plt.ylabel("Training Accuracy")
     plt.legend(loc='best')
     plt.show()
     

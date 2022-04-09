@@ -107,6 +107,37 @@ class Forecaster(nn.Module):
         return out
 
 
+class Forecaster_fc_hidden(nn.Module):
+    def __init__(self, input_features, encoder_hidden_features, fc_hidden,
+                 output_length, encoder_layers=1):
+        super(Forecaster_fc_hidden, self).__init__()
+        
+        self.encoder = nn.RNN(input_size=input_features,
+                              hidden_size=encoder_hidden_features,
+                              num_layers=encoder_layers,
+                              batch_first=True)
+        
+        self.fc_hidden = nn.Linear(encoder_hidden_features, fc_hidden)
+        self.fc_activation = nn.ReLU()
+        self.fc_out = nn.Linear(fc_hidden, output_length * input_features)
+        
+        self.output_length = output_length
+        self.input_features = input_features
+        
+    def forward(self, x):
+        N = x.shape[0]
+        encoder_o, encoder_h_n = self.encoder(x)
+        
+        fc_input = torch.flatten(encoder_h_n.permute(1,0,2), start_dim=1,
+                                 end_dim=-1)
+        out = self.fc_hidden(fc_input)
+        out = self.fc_activation(out)
+        out = self.fc_out(out)
+        
+        out = out.reshape(N, self.output_length, self.input_features)
+        return out
+    
+
 if __name__ == '__main__':
     if False:
         data = []
@@ -129,3 +160,11 @@ if __name__ == '__main__':
         #o, h_n = mod.forward(x)
         o = mod.forward(x)
         print('output shape', o.shape)
+        
+    if False:
+        x = torch.randn(20,30,4)
+        m = Forecaster_fc_hidden(4,10,50,5)
+        
+        y = m.forward(x)
+        print(x.shape)
+        print(y.shape)
