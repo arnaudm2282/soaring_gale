@@ -109,4 +109,58 @@ if False:
         plot_forecast(mod, x, t)
     
     pass
-    
+
+
+# %% Small dataset tests - referenced in writeup
+
+# Train small data with Forecaster_fc_hidden model, with a single feature 
+#  (Close)
+if False:
+    etfs_path = './data/ETFs'
+    etf_files = os.listdir(etfs_path)
+    train_start_date, train_end_date = '2014-01-01', '2016-01-01'
+    val_end_date = '2017-01-01'
+
+    test, val, train_dat = datap.split_etfs(etf_files)
+
+    train_data = datap.small_data(train_dat, etfs_path, train_start_date, 
+                                    train_end_date, n_stocks=20, process_data=datap.only_close)  # Contains 20 random ETFs
+
+    valid_data = datap.small_data(val, etfs_path, train_end_date, 
+                                    val_end_date, n_stocks=5, process_data=datap.only_close)  # Contains 5 random ETFs
+
+    mod = model.Forecaster_fc_hidden(input_features=1,encoder_hidden_features=150, 
+                                    fc_hidden=75,output_length=5)
+
+    model_name = 'forecaster_fc_hidden(1,150,75,5)'
+    checkpoint_path = './checkpoints/small_data_forecaster_fc_hidden_20'
+    train.train_model(mod, train_data, valid_data, num_epochs=20, 
+                      learning_rate=0.001,
+                      checkpoint_path=checkpoint_path,
+                      checkpoint_name=model_name)
+
+# Train the entire ETFs data set with Forecaster_fc_hidden model, with a single
+#  feature (Close)
+if False:
+    etfs_path = './data/ETFs'
+    etf_files = os.listdir(etfs_path)
+    train_start_date, train_end_date = '2014-01-01', '2016-01-01'
+    val_end_date = '2017-01-01'
+
+    test, val, train_dat = datap.split_etfs(etf_files)
+
+    train_data = datap.small_data(train_dat, etfs_path, train_start_date, 
+                                    train_end_date, len(train_dat), process_data=datap.only_close)  
+
+    valid_data = datap.small_data(val, etfs_path, train_end_date, 
+                                    val_end_date, len(val), process_data=datap.only_close)  
+
+    mod = model.Forecaster_fc_hidden(input_features=1,encoder_hidden_features=150, 
+                                    fc_hidden=100,output_length=5)
+
+    model_name = 'forecaster_fc_hidden(1,150,100,5)'
+    checkpoint_path = './checkpoints/entire_data_forecaster_fc_hidden_30'
+    train.train_model(mod, train_data, valid_data, num_epochs=30, 
+                      learning_rate=0.001,
+                      checkpoint_path=checkpoint_path,
+                      checkpoint_name=model_name)
