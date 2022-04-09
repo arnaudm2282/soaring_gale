@@ -1,3 +1,10 @@
+'''
+This filel contains the model architectures we explore in this project. The
+final model architecture we settled on is the Forecaster_fc_hidden class. Below
+that are some other architectures we tried (kept here becuase we reference them
+in the README).
+'''
+
 import torch
 import sklearn
 from sklearn.preprocessing import MinMaxScaler
@@ -12,10 +19,44 @@ import matplotlib.pyplot as plt
 import data_process as datap
 #from google.colab import drive
 
+# %% Final Model Architecture
+
+class Forecaster_fc_hidden(nn.Module):
+    def __init__(self, input_features, encoder_hidden_features, fc_hidden,
+                 output_length, encoder_layers=1):
+        super(Forecaster_fc_hidden, self).__init__()
+        
+        self.encoder = nn.RNN(input_size=input_features,
+                              hidden_size=encoder_hidden_features,
+                              num_layers=encoder_layers,
+                              batch_first=True)
+        
+        self.fc_hidden = nn.Linear(encoder_hidden_features, fc_hidden)
+        self.fc_activation = nn.ReLU()
+        self.fc_out = nn.Linear(fc_hidden, output_length * input_features)
+        
+        self.output_length = output_length
+        self.input_features = input_features
+        
+    def forward(self, x):
+        N = x.shape[0]
+        encoder_o, encoder_h_n = self.encoder(x)
+        
+        fc_input = torch.flatten(encoder_h_n.permute(1,0,2), start_dim=1,
+                                 end_dim=-1)
+        out = self.fc_hidden(fc_input)
+        out = self.fc_activation(out)
+        out = self.fc_out(out)
+        
+        out = out.reshape(N, self.output_length, self.input_features)
+        return out
+    
+
+# %% Other mdoel architectures that were tried
+
 
 class RNN(nn.Module):
-    def __init__(self,input_size,hidden,output_size, processing_func=None ):
-        # TODO
+    def __init__(self,input_size,hidden,output_size, processing_func=None):
         super(RNN,self).__init__()
         self.func = processing_func
         self.hidden = hidden
@@ -23,11 +64,6 @@ class RNN(nn.Module):
         self.fc = nn.Linear(hidden,output_size)
         
     def forward(self, x):
-        # TODO
-        
-        #x = self.func(x)
-        #x=x
-        #x = torch.reshape(x,(1,30,6))
         out, _ = self.rnn(x)
         out = self.fc(out[:,:5,:])
         return out
@@ -69,17 +105,13 @@ class Forecaster_fc(nn.Module):
                                   num_layers=forecaster_layers,
                                   batch_first=True)
         
-        # TODO
         self.fc = nn.Linear(forecaster_hidden_features,output_size)
         
     def forward(self, x):
         encoder_o, encoder_h_n = self.encoder(x)
         forecaster_o, forecaster_h_n = self.forecaster(encoder_o)
-        #print('x shape', x.shape)
-        #print('e shape', encoder_o.shape, encoder_h_n.shape)
-        #print('f shape', forecaster_o.shape, forecaster_h_n.shape)
-        out = self.fc(forecaster_o[:,:5,:]) # TODO
-        return out#, forecaster_h_n
+        out = self.fc(forecaster_o[:,:5,:])
+        return out
 
 
 class Forecaster(nn.Module):
@@ -107,36 +139,7 @@ class Forecaster(nn.Module):
         return out
 
 
-class Forecaster_fc_hidden(nn.Module):
-    def __init__(self, input_features, encoder_hidden_features, fc_hidden,
-                 output_length, encoder_layers=1):
-        super(Forecaster_fc_hidden, self).__init__()
-        
-        self.encoder = nn.RNN(input_size=input_features,
-                              hidden_size=encoder_hidden_features,
-                              num_layers=encoder_layers,
-                              batch_first=True)
-        
-        self.fc_hidden = nn.Linear(encoder_hidden_features, fc_hidden)
-        self.fc_activation = nn.ReLU()
-        self.fc_out = nn.Linear(fc_hidden, output_length * input_features)
-        
-        self.output_length = output_length
-        self.input_features = input_features
-        
-    def forward(self, x):
-        N = x.shape[0]
-        encoder_o, encoder_h_n = self.encoder(x)
-        
-        fc_input = torch.flatten(encoder_h_n.permute(1,0,2), start_dim=1,
-                                 end_dim=-1)
-        out = self.fc_hidden(fc_input)
-        out = self.fc_activation(out)
-        out = self.fc_out(out)
-        
-        out = out.reshape(N, self.output_length, self.input_features)
-        return out
-    
+# %% Testing code if running this file alone
 
 if __name__ == '__main__':
     if False:
